@@ -1,9 +1,13 @@
 package ro.pub.cs.systems.eim.practicaltest01
 
 import android.app.Activity
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -41,12 +45,14 @@ class PracticalTest01MainActivity : AppCompatActivity() {
         pressMeButton.setOnClickListener {
             leftNumber++
             input1.setText(leftNumber.toString())
+            startServiceIfConditionIsMet(leftNumber, rightNumber)
         }
 
         val pressMeTooButton = findViewById<Button>(R.id.right_button)
         pressMeTooButton.setOnClickListener {
             rightNumber++
             input2.setText(rightNumber.toString())
+            startServiceIfConditionIsMet(leftNumber, rightNumber)
         }
 
         val activityResultsLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -64,14 +70,54 @@ class PracticalTest01MainActivity : AppCompatActivity() {
             intent.putExtra(Constants.INPUT2, Integer.valueOf(input2.text.toString()))
             activityResultsLauncher.launch(intent)
         }
+
+        Constants.ACTIONS.forEach { action ->
+            intentFilter.addAction(action)
+        }
+    }
+
+    private fun startServiceIfConditionIsMet(leftNumber: Int, rightNumber: Int) {
+        if (leftNumber + rightNumber > Constants.NUMBER_OF_CLICKS_THRESHOLD) {
+            val intent = Intent(applicationContext, PracticalTest01Service::class.java).apply {
+                putExtra(Constants.INPUT1, leftNumber)
+                putExtra(Constants.INPUT2, rightNumber)
+            }
+            applicationContext.startService(intent)
+        }
+    }
+
+    private val messageBroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            intent?.let {
+                Log.d(Constants.BROADCAST_RECEIVER_TAG, it.action.toString())
+                Log.d(Constants.BROADCAST_RECEIVER_TAG, it.getStringExtra(Constants.EXTRA_BROADCAST_MESSAGE).toString())
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(messageBroadcastReceiver, intentFilter, Context.RECEIVER_EXPORTED)
+        } else {
+            registerReceiver(messageBroadcastReceiver, intentFilter)
+        }
     }
 
     override fun onPause() {
         super.onPause()
+        unregisterReceiver(messageBroadcastReceiver)
     }
 
     override fun onStop() {
         super.onStop()
+    }
+
+    override fun onDestroy() {
+        val intent = Intent(applicationContext, PracticalTest01Service::class.java)
+        applicationContext.stopService(intent)
+        super.onDestroy()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
