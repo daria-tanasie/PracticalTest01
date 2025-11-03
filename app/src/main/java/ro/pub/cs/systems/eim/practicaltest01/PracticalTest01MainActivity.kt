@@ -1,9 +1,14 @@
 package ro.pub.cs.systems.eim.practicaltest01
 
+import android.app.Activity
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -12,6 +17,7 @@ class PracticalTest01MainActivity : AppCompatActivity() {
 
     private lateinit var input1:  EditText
     private lateinit var input2: EditText
+    private val intentFilter = IntentFilter()
 
     private var leftNumber = 0
     private var rightNumber = 0
@@ -41,6 +47,22 @@ class PracticalTest01MainActivity : AppCompatActivity() {
         pressMeTooButton.setOnClickListener {
             rightNumber++
             input2.setText(rightNumber.toString())
+        }
+
+        val activityResultsLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                Toast.makeText(this, "Activity result ok", Toast.LENGTH_LONG).show()
+            } else if (result.resultCode == RESULT_CANCELED) {
+                Toast.makeText(this, "Activity result canceled", Toast.LENGTH_LONG).show()
+            }
+        }
+
+        val navigateToSecActivityButton = findViewById<Button>(R.id.second_activity_button)
+        navigateToSecActivityButton.setOnClickListener {
+            val intent = Intent(this, PracticalTest01SecondaryActivity::class.java)
+            intent.putExtra(Constants.INPUT1, Integer.valueOf(input1.text.toString()))
+            intent.putExtra(Constants.INPUT2, Integer.valueOf(input2.text.toString()))
+            activityResultsLauncher.launch(intent)
         }
     }
 

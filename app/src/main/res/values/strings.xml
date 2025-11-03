@@ -2,4 +2,7 @@
     <string name="app_name">PracticalTest01</string>
     <string name="press_me">Press Me!</string>
     <string name="press_me_too">Press Me Too!</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="sec_activity">Secondary activity</string>
 </resources>
